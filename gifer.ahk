@@ -16,13 +16,15 @@ global FNameB =
 
 global START_OFFSET := 0
 global FINISH_OFFSET := 0
-global GIFER_VERSION := "8-12 live"
+global GIFER_VERSION := "9.1 testing"
 
 ; Has a separate file for storing user settings and hotkeys.
 ; It must be placed at the same directory with this one.
 #include gifer_settings.ahk
 #include gifer_player_interface.ahk
 #include gifer_encoder_interface.ahk
+
+SetWorkingDir, %WORK_FOLDER%
 
 if (PLAYER_TYPE = "VLC") 
 	PlayerHandler := new VLCInterface()

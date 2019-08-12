@@ -30,13 +30,14 @@ Class EncoderInterface {
 		FileAppend, ==ENCODE==`n %encodeCMD% `n, % this.c_ffmpegLog()
 
 		; whole command string must be enclosed with double quotes as well
-		RunWait, % ComSpec " /c """ encodeCMD """", %A_AppData%, Hide
+		; WARNING! MUST BE RUN IN THE DIRECTORY WITH TEMPORARY SUBTITLES FILE
+		RunWait, % ComSpec " /c """ encodeCMD """", %A_WorkingDir%, Hide
 		if (ErrorLevel)
 			throw ErrorLevel
 	}
 
 	getEncodingCommand(ffmpegParams, newVideoFullName, sourceVideoFile, markA, markB) {
-		; all full paths passed by variables should be enclosed with "" 
+		; all full paths passed by variables must be enclosed with "" 
 		return % """" this.c_ffmpegExe() """ -nostdin -ss " markA " -t " markB-markA " -i """ sourceVideoFile """ " this.c_forceFrate() ffmpegParams " -t " markB-markA " """ newVideoFullName """ 2>> """ this.c_ffmpegLog() """"
 	}
 
@@ -52,13 +53,13 @@ Class EncoderInterface {
 			if (FileExist(this.c_tempSubFile()))
 				FileDelete, % this.c_tempSubFile()
 			FileAppend, ==SUBS==`n %subExtractCMD% `n, % this.c_ffmpegLog()
-			RunWait, % ComSpec " /c """ subExtractCMD """", %A_AppData%, Hide
+			RunWait, % ComSpec " /c """ subExtractCMD """", %A_WorkingDir%, Hide
 			FileGetSize, subFileSize, % this.c_tempSubFile()
 			; checking whether there actually are some subs available during our interval
 			if (ErrorLevel or subFileSize = 0)
 				ShowGUIMessage("No subtitles are available for this clip!`nWill encode without subs...",1)
 			else {
-				; removing additional font tags from subs
+				; removing additional formatting tags from subs
 				FileRead, subContents, % this.c_tempSubFile()
 		        subContents := RegExReplace(subContents, "<.*?>")
 				subFile := FileOpen(this.c_tempSubFile(), "w")
@@ -75,18 +76,18 @@ Class EncoderInterface {
 		return ffmpegParams
 	}
 
-	; lurk for separate subtitle files within input video folder
-	; if none found, set the command to try extracting them from video file
+	; look for separate subtitle files within input video folder
+	; if none found, set the command to try extracting subtitles from the source video
 	getSubSource(sourceVideoFile, markA, markB) {
 		subFile := RegexReplace(sourceVideoFile, "\.[\w\d]+$", ".srt")
 		assFile := RegexReplace(sourceVideoFile, "\.[\w\d]+$", ".ass")
 		; checking whether .srt or .ass file with the same name as the video exists in the same directory
 		if FileExist(subFile) 
-			subExtractCMD := EncoderInterface.getSubExtractCommand(markA, markB, SubFile)
+			subExtractCMD := this.getSubExtractCommand(markA, markB, SubFile)
 		else if FileExist(assFile) 
-			subExtractCMD := EncoderInterface.getSubExtractCommand(markA, markB, AssFile)
+			subExtractCMD := this.getSubExtractCommand(markA, markB, AssFile)
 		else 
-			subExtractCMD := EncoderInterface.getInnateSubExtractCommand(markA, markB, sourceVideoFile)
+			subExtractCMD := this.getInnateSubExtractCommand(markA, markB, sourceVideoFile)
 		return subExtractCMD
 	}
 

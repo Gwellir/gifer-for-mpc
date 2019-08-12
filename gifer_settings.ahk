@@ -36,10 +36,12 @@ global FFMPEG_WSUBS := " -sn -pix_fmt yuv420p -vf ""[in]scale=iw*sar:ih, scale='
 global FFMPEG_SOUND := " -c:a aac -b:a 128k -ac 2 "
 ; set CLIPFOLDER to "" to put clips into the same folder as source video
 global CLIP_FOLDER := "%USERPROFILE%\Videos\"
-global FFMPEG_EXE := A_AppData "\ffmpeg.exe"
-global FFMPEG_LOG := A_AppData "\ffmpeg_gifer.log"
-global TEMP_SUB_FILE := A_AppData "\temp_subs" SUB_FORMAT
-global CLIPBOARD_UTIL := A_AppData "\file2clip.exe"
+global WORK_FOLDER := A_AppData "\gifer-for-mpc\"
+global FFMPEG_EXE := WORK_FOLDER "\ffmpeg.exe"
+global FFMPEG_LOG := WORK_FOLDER "\ffmpeg_gifer.log"
+global TEMP_SUB_FILE := WORK_FOLDER "\temp_subs" SUB_FORMAT
+global CLIPBOARD_UTIL := WORK_FOLDER "\file2clip.exe"
+global TEMP_STATUS_FILE := WORK_FOLDER "\mpc_status.html"
 
 ; HOTKEYS   -----------------------------------------------------
 

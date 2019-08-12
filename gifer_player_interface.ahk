@@ -16,48 +16,52 @@ Class PlayerInterface {
 		}
 	}
 
-	RetrieveHTTP(URLToGet) {
-		oHTTP := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		oHTTP.Open("GET", URLToGet, False)
-		; WHR SetCredentials cannot work with empty username (VLC only,
-		; MPC WebUI ignores this)
-		oHTTP.SetRequestHeader("Authorization", "Basic " VLCPasswordInBase64)
-		oHTTP.Send()
-		return this.EncodingFix(oHTTP)
-	}
-
 	; Makes initial calls to the player's WebUI and passes the response
 	; to individual player's handler .UnifyWebUIResponse for unification
 	GetPlaybackStatus() {
-		KeyPressTime := A_TickCount
+		keyPressTime := A_TickCount
 		try {
-			DecodedStr := this.RetrieveHTTP(this.WebUIUrl)
+			decodedStr := this.RetrieveHTTP(this.webUIUrl)
 		} catch e {
-			ShowGUIMessage(PlayerType . " or its WebUI is not running!`n" . e, 1, 3000)
+			ShowGUIMessage(this.PlayerType . " or its WebUI is not running!`n" . e, 1, 3000)
 			return
 		}
 		; File operations delay (can reach ~1 sec on the first run)
-		Delay := A_TickCount - KeyPressTime
+		delay := A_TickCount - keyPressTime
 		; personalized function for working with individual players
-		PlayerStatus := this.UnifyWebUIResponse(DecodedStr)
+		PlayerStatus := this.UnifyWebUIResponse(decodedStr)
 		; no corrections when video is paused for precise marking
 		If InStr(PlayerStatus["state"], "playing")
-			PlayerStatus["position"] -= (ReactionTime + Delay)
+			PlayerStatus["position"] -= (ReactionTime + delay)
 		return PlayerStatus
 	}
 }
 
 class MPCInterface extends PlayerInterface {
-	WebUIUrl := "http://localhost:13579/status.html"
+	webUIUrl := "http://localhost:13579/status.html"
+	tempStatusFile := TEMP_STATUS_FILE
+
+	RetrieveHTTP(URLToGet) {
+		if FileExist(this.tempStatusFile)
+			FileDelete, % this.tempStatusFile
+		try UrlDownloadToFile, % this.webUIUrl, % this.tempStatusFile
+		catch Err {
+			Throw, "Can't get MPC status!"
+			return
+		}
+		FileRead, decodedStr, % *P65001 this.tempStatusFile ; *P65001 enforces reading as UTF
+			return decodedStr
+	}
 
 	; hack to force MPC's webUI response to be interpreted as utf-8
-	EncodingFix(HTTPObject) {
-		pArr := ComObjValue(HTTPObject.ResponseBody)
-		cBytes := NumGet(pArr+0, A_PtrSize = 8? 24:16, "uint")
-		pText := NumGet(pArr+0, A_PtrSize = 8? 16:12, "ptr")
-		httpResponse := StrGet(pText, cBytes, "utf-8")
-		return httpResponse
-	}
+	; //FIXME doesn't work consistently, is probably incorrectly implemented
+	; EncodingFix(HTTPObject) {
+	; 	pArr := ComObjValue(HTTPObject.ResponseBody)
+	; 	cBytes := NumGet(pArr+0, A_PtrSize = 8? 24:16, "uint")
+	; 	pText := NumGet(pArr+0, A_PtrSize = 8? 16:12, "ptr")
+	; 	httpResponse := StrGet(pText, cBytes, "utf-8")
+	; 	return httpResponse
+	; }
 
 	; converts data relevant for the script into object
 	UnifyWebUIResponse(WebUIReply) {
@@ -72,6 +76,16 @@ class MPCInterface extends PlayerInterface {
 
 class VLCInterface extends PlayerInterface {
 	WebUIUrl := "http://localhost:8080/requests/status.json"
+
+	RetrieveHTTP(URLToGet) {
+		oHTTP := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		oHTTP.Open("GET", URLToGet, False)
+		; WHR SetCredentials cannot work with empty username (VLC only,
+		; MPC WebUI ignores this)
+		oHTTP.SetRequestHeader("Authorization", "Basic " VLCPasswordInBase64)
+		oHTTP.Send()
+		return this.EncodingFix(oHTTP)
+	}
 
 	EncodingFix(HTTPObject) {
 		httpResponse := HTTPObject.ResponseText
