@@ -1,8 +1,6 @@
 ; PlayerInterface CLASS ----------------------------------------------------------
 
 Class PlayerInterface {
-	static VLCPasswordInBase64 := VLC_PW_IN_BASE64
-	;static PlayerType := PLAYER_TYPE
 	static ReactionTime := REACTION_TIME
 
 	__New() {
@@ -76,13 +74,14 @@ class MPCInterface extends PlayerInterface {
 
 class VLCInterface extends PlayerInterface {
 	WebUIUrl := "http://localhost:8080/requests/status.json"
+	VLCPasswordInBase64 := VLC_PW_IN_BASE64
 
 	RetrieveHTTP(URLToGet) {
 		oHTTP := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 		oHTTP.Open("GET", URLToGet, False)
 		; WHR SetCredentials cannot work with empty username (VLC only,
 		; MPC WebUI ignores this)
-		oHTTP.SetRequestHeader("Authorization", "Basic " VLCPasswordInBase64)
+		oHTTP.SetRequestHeader("Authorization", "Basic " this.VLCPasswordInBase64)
 		oHTTP.Send()
 		return this.EncodingFix(oHTTP)
 	}
