@@ -8,38 +8,38 @@
 
 Menu, Tray, Icon, %A_WinDir%\system32\shell32.dll,224
 
-global PLAYERTYPE := "MPC" ; "MPC"|"VLC"
+global PLAYER_TYPE := "MPC" ; "MPC"|"VLC"
 ; this is ":12345" encoded with base64. Don't ask. Just don't.
 ; Do set your VLC web-interface password to "12345" though.
-global VLCPWINBASE64 := "OjEyMzQ1" ; VLC-only option
+global VLC_PW_IN_BASE64 := "OjEyMzQ1" ; VLC-only option
 ; in milliseconds, adjustment for reaction time when making markers while video is being played, you can tune it to your taste
-global REACTIONTIME := 400
+global REACTION_TIME := 400
 ; manually set permanent marker offsets (in milliseconds)
 ; for start and finish of selected interval
 ; positive value moves marker closer to the end of file
-global STARTOFFSET := 0
-global FINISHOFFSET := 0
+global START_OFFSET := 0
+global FINISH_OFFSET := 0
 ; EDITED vvvvvvvvvvv - framerate 24000/1001 fps
 ; you can set this option to "" to use file's framerate but there will be unpredictable
 ; glitches with some codec/container combinations, or if input video has variable framerate
-global FORCEFRATE := " -r ntsc-film " ; for compatibility use
+global FORCE_FRATE := " -r ntsc-film " ; for compatibility use
 ; no subtitle tracks, 8-bit color, rescale to make pixels square, width 800px or native if it's lower, height dividable by 2,
 ; worst recommended h264 quality (28, lower is better, down to 18), encode with libx264
-global FFMPEGDEFAULT := " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min(800,iw)':-2"" -crf 28 -c:v libx264 "
+global FFMPEG_DEFAULT := " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min(800,iw)':-2"" -crf 28 -c:v libx264 "
 ; everything else should be obvious, while PrimaryColour format is &H<2-symbol hexcode for transparency level><BBGGRR color hex code>
 ; any ASS style fields https://pastebin.com/80yDaaRF should be usable under 'force_style' parameter
-global SUBFORMAT := ".ass" ; .ass|.srt, srt sometimes has troubles with timing
-global FFMPEGWSUBS := " -sn -pix_fmt yuv420p -vf ""[in]scale=iw*sar:ih, scale='min(800,iw)':-2, subtitles=temp_subs" SUBFORMAT ":force_style='FontName=Open Sans Semibold,FontSize=45,PrimaryColour=&H00FFFFFF,Bold=1'"" -crf 28 -c:v libx264 " 
+global SUB_FORMAT := ".ass" ; .ass|.srt, srt sometimes has troubles with timing
+global FFMPEG_WSUBS := " -sn -pix_fmt yuv420p -vf ""[in]scale=iw*sar:ih, scale='min(800,iw)':-2, subtitles=temp_subs" SUB_FORMAT ":force_style='FontName=Open Sans Semibold,FontSize=45,PrimaryColour=&H00FFFFFF,Bold=1'"" -crf 28 -c:v libx264 " 
 ; " -c:a copy " should be usable for 95% cases probably, like all HS ongoing releases
 ; " -c:a aac -b:a 128k -ac 2 " will recode audio to AAC 128kbit/s stereo
 ; (in case of 5.1 stuff or awkward codecs)
-global FFMPEGSOUND := " -c:a aac -b:a 128k -ac 2 "
+global FFMPEG_SOUND := " -c:a aac -b:a 128k -ac 2 "
 ; set CLIPFOLDER to "" to put clips into the same folder as source video
-global CLIPFOLDER := "%USERPROFILE%\Videos\"
-global FFMPEGEXE := A_AppData "\ffmpeg.exe"
-global FFMPEGLOG := A_AppData "\ffmpeg_gifer.log"
-global TEMPSUBFILE := A_AppData "\temp_subs" SUBFORMAT
-global CLIPBOARDUTIL := A_AppData "\file2clip.exe"
+global CLIP_FOLDER := "%USERPROFILE%\Videos\"
+global FFMPEG_EXE := A_AppData "\ffmpeg.exe"
+global FFMPEG_LOG := A_AppData "\ffmpeg_gifer.log"
+global TEMP_SUB_FILE := A_AppData "\temp_subs" SUB_FORMAT
+global CLIPBOARD_UTIL := A_AppData "\file2clip.exe"
 
 ; HOTKEYS   -----------------------------------------------------
 
