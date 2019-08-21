@@ -40,18 +40,16 @@ ShowGUIMessage(Message, isWarning:=0, Duration:=2000) {
 	Gui, Color, %CustomColor%
 	Gui, Font, s16  ; Set font size (16-point).
 	if (isWarning = 0) {
-		If (PLAYER_TYPE = "VLC")
+		if (PLAYER_TYPE = "VLC")
 			Gui, Add, Text, c0feeeb, % Message 
 		else
 			Gui, Add, Text, cLime, % Message 
 	}
-	Else
+	else
 		Gui, Add, Text, cRed, % Message 
 	WinSet, Transparent, 170 ; can be TransColor, %CustomColor% for transparent BG
 	Gui, Show, x0 y0 NoActivate  ; NoActivate avoids deactivating the currently active window.
-	Sleep, Duration
-	Gui, Hide
-	Gui, Destroy
+	SetTimer, KillPopup, %Duration%
 	Return
 }
 
@@ -141,6 +139,11 @@ Return
 ; end marker
 MarkFinish:
 	MakeMarkB(PlayerHandler)
+Return
+
+KillPopup:
+	Gui, Hide
+	Gui, Destroy
 Return
 
 ; check and encode
