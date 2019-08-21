@@ -51,16 +51,6 @@ class MPCInterface extends PlayerInterface {
 			return decodedStr
 	}
 
-	; hack to force MPC's webUI response to be interpreted as utf-8
-	; //FIXME doesn't work consistently, is probably incorrectly implemented
-	; EncodingFix(HTTPObject) {
-	; 	pArr := ComObjValue(HTTPObject.ResponseBody)
-	; 	cBytes := NumGet(pArr+0, A_PtrSize = 8? 24:16, "uint")
-	; 	pText := NumGet(pArr+0, A_PtrSize = 8? 16:12, "ptr")
-	; 	httpResponse := StrGet(pText, cBytes, "utf-8")
-	; 	return httpResponse
-	; }
-
 	; converts data relevant for the script into object
 	UnifyWebUIResponse(WebUIReply) {
 		; converting response syntax to MPC-BE format
@@ -83,12 +73,7 @@ class VLCInterface extends PlayerInterface {
 		; MPC WebUI ignores this)
 		oHTTP.SetRequestHeader("Authorization", "Basic " this.VLCPasswordInBase64)
 		oHTTP.Send()
-		return this.EncodingFix(oHTTP)
-	}
-
-	EncodingFix(HTTPObject) {
-		httpResponse := HTTPObject.ResponseText
-		return httpResponse
+		return oHTTP.ResponseText
 	}
 
 	; VLC returns file name in URI format
