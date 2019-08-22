@@ -3,7 +3,7 @@
 Class Ffmpeg {
 	; wrappers for parameters corresponding to the encoder (ffmpeg) options
 ; ENCODER PARAMETERS ----------------------------------------------------------
-; EDITED vvvvvvvvvvv - framerate 24000/1001 fps
+; framerate 24000/1001 fps
 ; you can set this option to "" to use file's framerate but there will be unpredictable
 ; glitches with some codec/container combinations, or if input video has variable framerate
 	ntscRate {
@@ -12,15 +12,25 @@ Class Ffmpeg {
 		} }
 ; no subtitle tracks, 8-bit color, rescale to make pixels square, width 800px or native if it's lower, height dividable by 2,
 ; worst recommended h264 quality (28, lower is better, down to 18), encode with libx264
+	paramsPattern {
+		get { 
+			return " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min({1},iw)':-2{2}"" -crf {3} -c:v libx264 "
+		} }
 	defaultParams {
 		get {
-			return " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min(800,iw)':-2"" -crf 28 -c:v libx264 "
+			settingsDefault := [CLIP_WIDTH, "", CLIP_QUALITY]
+			return format(Ffmpeg.paramsPattern, settingsDefault*)
 		} }
 ; everything else should be obvious, while PrimaryColour format is &H<2-symbol hexcode for transparency level><BBGGRR color hex code>
 ; any ASS style fields https://pastebin.com/80yDaaRF should be usable under 'force_style' parameter
+	subsPattern {
+		get {
+			return format(", subtitles={1}:force_style='FontName=Open Sans Semibold,FontSize=45,PrimaryColour=&H00FFFFFF,Bold=1'", TEMP_SUB_FILE)
+		} }
 	withSubs {
 		get {
-			return " -sn -pix_fmt yuv420p -vf ""[in]scale=iw*sar:ih, scale='min(800,iw)':-2, subtitles=temp_subs.ass:force_style='FontName=Open Sans Semibold,FontSize=45,PrimaryColour=&H00FFFFFF,Bold=1'"" -crf 28 -c:v libx264 "
+			settingsSubs := [CLIP_WIDTH, FFmpeg.subsPattern, CLIP_QUALITY]
+			return format(Ffmpeg.paramsPattern, settingsSubs*)
 		} }
 ; " -c:a copy " should be usable for 95% cases probably, like all HorribleSubs ongoing releases
 ; " -c:a aac -b:a 128k -ac 2 " will recode audio to AAC 128kbit/s stereo
@@ -41,7 +51,7 @@ Class Ffmpeg {
 		} }
 	tempSubFile {
 		get {
-			return WORK_FOLDER "\temp_subs.ass"
+			return WORK_FOLDER "\" TEMP_SUB_FILE
 		} }
 }
 
@@ -71,19 +81,14 @@ Class EncoderInterface {
 		
 		if (clip.mode >= 1) {
 			subExtractCMD := this.getSubSource(clip)
-			if (FileExist(Ffmpeg.tempSubFile))
-				FileDelete, % Ffmpeg.tempSubFile
-			FileAppend, ==Sub extraction start (debug)==`n %subExtractCMD% `n, % Ffmpeg.logFile
-			RunWait, % ComSpec " /c """ subExtractCMD """", %A_WorkingDir%, Hide
-			FileGetSize, subFileSize, % Ffmpeg.tempSubFile
-			; checking whether there actually are some subs available during our interval
-			if (ErrorLevel or subFileSize = 0)
-				ShowGUIMessage("No subtitles are available for this clip!`nWill encode without subs...",1)
-			else {
+			if (this.extractAndCheckSubs(subExtractCMD)) {
 				this.prepareSubtitles()
 				ffmpegParams := Ffmpeg.withSubs
+			} else {
+				ShowGUIMessage("No subtitles are available for this clip!`nWill encode without subs...",1)
 			}
 		}
+		
 		if (clip.mode < 2)
 			; no audio stream option
 			ffmpegParams := " -an " ffmpegParams
@@ -113,6 +118,20 @@ Class EncoderInterface {
 		return subExtractCMD
 	}
 
+	extractAndCheckSubs(subExtractCMD) {
+		if (FileExist(Ffmpeg.tempSubFile))
+			FileDelete, % Ffmpeg.tempSubFile
+		FileAppend, ==Sub extraction start (debug)==`n %subExtractCMD% `n, % Ffmpeg.logFile
+		RunWait, % ComSpec " /c """ subExtractCMD """", %A_WorkingDir%, Hide
+		
+		FileGetSize, subFileSize, % Ffmpeg.tempSubFile
+		; checking whether there actually are some subs available during our interval
+		if (ErrorLevel or subFileSize = 0)
+			return False
+		else 
+			return True
+	}
+	
 	getSubsFromSubFile(startPos, duration, subFile) {
 		cmdParams := [Ffmpeg.exeFile, startPos, duration, subFile, duration, Ffmpeg.tempSubFile, Ffmpeg.logFile]
 		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}""", cmdParams*)
