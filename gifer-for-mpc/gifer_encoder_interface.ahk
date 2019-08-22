@@ -40,6 +40,21 @@ Class Ffmpeg {
 			return " -c:a aac -b:a 128k -ac 2 "
 		} }
 
+; FFMPEG COMMANDS BUILDERS -----------------------------------------------------
+	fileSubExtractPattern {
+		get {
+			return """{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}"""
+		} }
+	videoSubExtractPattern {
+		get {
+			return """{1}"" -ss {2} -t {3} -i ""{4}"" -map 0:s:0 -t {5} {6} ""{7}"" 2>> ""{8}"""
+		} }
+	finalEncodePattern {
+		get {
+			return """{1}"" -nostdin -ss {2} -t {3} -i ""{4}"" {5} {6} -t {7} ""{8}"" 2>> ""{9}"""
+		}
+	}
+
 ; FILE LOCATIONS
 	exeFile {
 		get {
@@ -99,7 +114,7 @@ Class EncoderInterface {
 	getEncodingCommand(ffmpegParams, clip) {
 		; all full paths passed by variables must be enclosed with ""
 		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.sourceFile, Ffmpeg.ntscRate, ffmpegParams, clip.duration, clip.clipFile, Ffmpeg.logFile]
-		return format("""{1}"" -nostdin -ss {2} -t {3} -i ""{4}"" {5} {6} -t {7} ""{8}"" 2>> ""{9}""", cmdParams*)
+		return format(Ffmpeg.finalEncodePattern, cmdParams*)
 	}
 
 	; look for separate subtitle files within input video folder
@@ -133,12 +148,12 @@ Class EncoderInterface {
 	
 	getSubsFromSubFile(startPos, duration, subFile) {
 		cmdParams := [Ffmpeg.exeFile, startPos, duration, subFile, duration, Ffmpeg.tempSubFile, Ffmpeg.logFile]
-		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}""", cmdParams*)
+		return format(Ffmpeg.fileSubExtractPattern, cmdParams*)
 	}
 
 	getSubsFromVideoFile(startPos, duration, videoFile) {
 		cmdParams := [Ffmpeg.exeFile, startPos, duration, videoFile, duration, Ffmpeg.ntscRate, Ffmpeg.tempSubFile, Ffmpeg.logFile]
-		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -map 0:s:0 -t {5} {6} ""{7}"" 2>> ""{8}""", cmdParams*)
+		return format(Ffmpeg.videoSubExtractPattern, cmdParams*)
 	}
 
 	prepareSubtitles() {
