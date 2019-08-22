@@ -63,8 +63,8 @@ ShowGUIMessage(Message, isWarning:=0, Duration:=2000) {
 
 ^!q::
 Debug:
-	MsgBox % GIFER_VERSION "`n" PlayerHandler.PlayerType "`n" currentClip.startPos "`n" currentClip.endPos "`n" currentClip.fName "`n" PrepareClipName("test.mp4",0,0,0) ;FNameShort "`n"
-	clipboard := GIFER_VERSION "`n" PlayerHandler.PlayerType "`n" currentClip.startPos "`n" currentClip.endPos "`n" currentClip.fName "`n" PrepareClipName("test.mp4",0,0,0)
+	MsgBox % GIFER_VERSION "`n" PlayerHandler.PlayerType "`n" currentClip.startPos "`n" currentClip.endPos "`n" currentClip.sourceFile "`n" PrepareClipName("test.mp4",0,0,0) ;FNameShort "`n"
+	clipboard := GIFER_VERSION "`n" PlayerHandler.PlayerType "`n" currentClip.startPos "`n" currentClip.endPos "`n" currentClip.sourceFile "`n" PrepareClipName("test.mp4",0,0,0)
 	; some debug stuff will be here I guess
 return
 

@@ -1,8 +1,8 @@
 ; Ffmpeg  handler CLASS ----------------------------------------------
 
 Class Ffmpeg {
-	; wrappers for parameters corresponding to the encoder (ffmpeg) options
 ; ENCODER PARAMETERS ----------------------------------------------------------
+
 ; framerate 24000/1001 fps
 ; you can set this option to "" to use file's framerate but there will be unpredictable
 ; glitches with some codec/container combinations, or if input video has variable framerate
@@ -10,8 +10,8 @@ Class Ffmpeg {
 		get {
 			return " -r ntsc-film "
 		} }
-; no subtitle tracks, 8-bit color, rescale to make pixels square, width 800px or native if it's lower, height dividable by 2,
-; worst recommended h264 quality (28, lower is better, down to 18), encode with libx264
+; no subtitle tracks, 8-bit color, rescale to make pixels square, width {CLIP_WIDTH}px or native if it's lower, height dividable by 2,
+; {CLIP_QUALITY} h264 quality (28, lower is better, down to 18), encode with libx264
 	paramsPattern {
 		get { 
 			return " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min({1},iw)':-2{2}"" -crf {3} -c:v libx264 "
@@ -59,12 +59,11 @@ Class Ffmpeg {
 ; EncoderInterface CLASS ----------------------------------------------------------
 
 Class EncoderInterface {
-	
-	encode(newVideoFullName, clip) {
+	encode(clip) {
 		ffmpegParams := this.prepareEncodingParameters(clip)
-		encodeCMD := this.getEncodingCommand(ffmpegParams, newVideoFullName, clip)
+		encodeCMD := this.getEncodingCommand(ffmpegParams, clip)
+		
 		FileAppend, ==Encode start (debug)==`n %encodeCMD% `n, % Ffmpeg.logFile
-
 		; whole command string must be enclosed with double quotes as well
 		; WARNING! MUST BE SET TO RUN IN THE DIRECTORY WITH TEMPORARY SUBTITLES FILE (usually A_WorkingDir)
 		RunWait, % ComSpec " /c """ encodeCMD """", %A_WorkingDir%, Hide
@@ -97,24 +96,24 @@ Class EncoderInterface {
 		return ffmpegParams
 	}
 
-	getEncodingCommand(ffmpegParams, newVideoFullName, clip) {
+	getEncodingCommand(ffmpegParams, clip) {
 		; all full paths passed by variables must be enclosed with ""
-		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.fName, Ffmpeg.ntscRate, ffmpegParams, clip.duration, newVideoFullName, Ffmpeg.logFile]
+		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.sourceFile, Ffmpeg.ntscRate, ffmpegParams, clip.duration, clip.clipFile, Ffmpeg.logFile]
 		return format("""{1}"" -nostdin -ss {2} -t {3} -i ""{4}"" {5} {6} -t {7} ""{8}"" 2>> ""{9}""", cmdParams*)
 	}
 
 	; look for separate subtitle files within input video folder
 	; if none found, set the command to try extracting subtitles from the source video
 	getSubSource(clip) {
-		subFile := RegexReplace(clip.fName, "\.[\w\d]+$", ".srt")
-		assFile := RegexReplace(clip.fName, "\.[\w\d]+$", ".ass")
+		subFile := RegexReplace(clip.sourceFile, "\.[\w\d]+$", ".srt")
+		assFile := RegexReplace(clip.sourceFile, "\.[\w\d]+$", ".ass")
 		; checking whether .srt or .ass file with the same name as the video exists in the same directory
 		if FileExist(subFile) 
 			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, SubFile)
 		else if FileExist(assFile) 
 			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, AssFile)
 		else 
-			subExtractCMD := this.getSubsFromVideoFile(clip.startPos, clip.duration, clip.fName)
+			subExtractCMD := this.getSubsFromVideoFile(clip.startPos, clip.duration, clip.sourceFile)
 		return subExtractCMD
 	}
 
@@ -138,7 +137,7 @@ Class EncoderInterface {
 	}
 
 	getSubsFromVideoFile(startPos, duration, videoFile) {
-		cmdParams := [Ffmpeg.exeFile, startPos, duration, videoFile, duration,Ffmpeg.ntscRate, Ffmpeg.tempSubFile, Ffmpeg.logFile]
+		cmdParams := [Ffmpeg.exeFile, startPos, duration, videoFile, duration, Ffmpeg.ntscRate, Ffmpeg.tempSubFile, Ffmpeg.logFile]
 		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -map 0:s:0 -t {5} {6} ""{7}"" 2>> ""{8}""", cmdParams*)
 	}
 

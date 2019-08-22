@@ -15,45 +15,45 @@ Class ClipHandler {
 		} }
 	clipParams {
 		get {
-			return {startPos: this.startPos, fName: this.fName, mode: this.mode, duration: this.duration}
+			return {startPos: this.startPos, sourceFile: this.sourceFile, mode: this.mode, duration: this.duration, clipFile: this.clipFile}
 		} }
 		
 ; NO GLOBALS BELOW THIS LINE --------------------------------------------------
 
-	__New(startPos:=0, endPos:=0, fName:="", mode:=0) {
+	__New(startPos:=0, endPos:=0, sourceFile:="", mode:=0) {
 		this.startPos := startPos
 		this.endPos := endPos
-		this.fName := fName
+		this.sourceFile := sourceFile
 		this.mode := mode
 	}
 
-	setStart(startPos, fName) {
+	setStart(startPos, sourceFile) {
 		this.startPos := startPos
-		if (fName != this.fName) {
-			this.fName := fName
+		if (sourceFile != this.sourceFile) {
+			this.sourceFile := sourceFile
 			this.endPos := startPos
 		}
-		ShowGUIMessage(format("Start point: {1}`n{2:0.1f} sec", this.fName, this.startPos))	
+		ShowGUIMessage(format("Start point: {1}`n{2:0.1f} sec", this.sourceFile, this.startPos))	
 	}
 
-	setEnd(endPos, fName) {
+	setEnd(endPos, sourceFile) {
 		this.endPos := endPos
-		if (fName != this.fName) {
-			this.fName := fName
+		if (sourceFile != this.sourceFile) {
+			this.sourceFile := sourceFile
 			this.startPos := endPos
 		}
-		ShowGUIMessage(format("End point: {1}`n{2:0.1f} sec", this.fName, this.endPos))	
+		ShowGUIMessage(format("End point: {1}`n{2:0.1f} sec", this.sourceFile, this.endPos))	
 	}
 
 	; Mode 0 - video only, 1 - with subs, 2 - with subs and sound
 	encodeClip(mode) {
-		if ((this.duration > 0) and (this.fName != "") and (mode == 0 or mode == 1 or mode == 2)) {
+		if ((this.duration > 0) and (this.sourceFile != "") and (mode == 0 or mode == 1 or mode == 2)) {
 			this.mode := mode
-			newVideoFullName := this.prepareClipPath()
+			this.prepareClipPath()
 			ShowGUIMessage("Encoding started...")
 			try {
-				EncoderInterface.encode(newVideoFullName, this.clipParams)
-				this.storeInClipboard(newVideoFullName)
+				EncoderInterface.encode(this.clipParams)
+				this.storeInClipboard()
 			} catch e { 
 				ShowGUIMessage("Could not encode the video!",1)
 			}
@@ -64,23 +64,22 @@ Class ClipHandler {
 	}
 
 	prepareClipPath() {
-		SplitPath, % this.fName , fNameShort, fNameDir
-		newVideoName := PrepareClipName(fNameShort, round(this.startPos*1000), round(this.endPos*1000), this.mode) ".mp4"
+		SplitPath, % this.sourceFile , fNameShort, fNameDir
+		newClipName := PrepareClipName(fNameShort, round(this.startPos*1000), round(this.endPos*1000), this.mode) ".mp4"
 		if (ClipHandler.clipFolder = "")
-			newVideoFullName := FNameDir "\" newVideoName
+			this.clipFile := FNameDir "\" newClipName
 		else
-			newVideoFullName := ClipHandler.clipFolder newVideoName
-		return newVideoFullName
+			this.clipFile := ClipHandler.clipFolder newClipName
 	}
 
-	storeInClipboard(newVideoFullName) {
+	storeInClipboard() {
 		if (FileExist(ClipHandler.clipboardUtil)) {
 			; copying clip into clipboard via file2clip
-			ClipCmd := ClipHandler.clipboardUtil " """ newVideoFullName """"
+			ClipCmd := ClipHandler.clipboardUtil " """ this.clipFile """"
 			RunWait, % ComSpec " /c """ ClipCmd """", %A_AppData%, Hide
-			ShowGUIMessage("Clip saved to: " newVideoFullName "`n-> Clipboard")
+			ShowGUIMessage("Clip saved to: " this.clipFile "`n-> Clipboard")
 		} 
 		else 
-			ShowGUIMessage("Clip saved to: " newVideoFullName)
+			ShowGUIMessage("Clip saved to: " this.clipFile)
 	}
 }
