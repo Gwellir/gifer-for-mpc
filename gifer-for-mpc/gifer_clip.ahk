@@ -1,6 +1,6 @@
 ; CLIP HANDLING CLASS ---------------------------------------------------------
 
-Class Clip {
+Class ClipHandler {
 	clipFolder {
 		get {
 			return CLIP_FOLDER
@@ -20,7 +20,7 @@ Class Clip {
 		
 ; NO GLOBALS BELOW THIS LINE --------------------------------------------------
 
-	__New(startPos:=0, endPos:=2, fName:="", mode:=0) {
+	__New(startPos:=0, endPos:=0, fName:="", mode:=0) {
 		this.startPos := startPos
 		this.endPos := endPos
 		this.fName := fName
@@ -66,17 +66,17 @@ Class Clip {
 	prepareClipPath() {
 		SplitPath, % this.fName , fNameShort, fNameDir
 		newVideoName := PrepareClipName(fNameShort, round(this.startPos*1000), round(this.endPos*1000), this.mode) ".mp4"
-		if (Clip.clipFolder = "")
+		if (ClipHandler.clipFolder = "")
 			newVideoFullName := FNameDir "\" newVideoName
 		else
-			newVideoFullName := Clip.clipFolder newVideoName
+			newVideoFullName := ClipHandler.clipFolder newVideoName
 		return newVideoFullName
 	}
 
 	storeInClipBoard(newVideoFullName) {
-		if (FileExist(Clip.clipboardUtil)) {
+		if (FileExist(ClipHandler.clipboardUtil)) {
 			; copying clip into clipboard via file2clip
-			ClipCmd := Clip.clipboardUtil " """ newVideoFullName """"
+			ClipCmd := ClipHandler.clipboardUtil " """ newVideoFullName """"
 			RunWait, % ComSpec " /c """ ClipCmd """", %A_AppData%, Hide
 			ShowGUIMessage("Clip saved to: " newVideoFullName "`n-> Clipboard")
 		} 

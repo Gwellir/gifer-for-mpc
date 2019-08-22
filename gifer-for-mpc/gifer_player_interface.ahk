@@ -29,8 +29,8 @@ Class PlayerInterface {
 		; personalized function for working with individual players
 		PlayerStatus := this.UnifyWebUIResponse(decodedStr)
 		; no corrections when video is paused for precise marking
-		If InStr(PlayerStatus["state"], "playing")
-			PlayerStatus["position"] -= (ReactionTime + delay)
+		If InStr(PlayerStatus.state, "playing")
+			PlayerStatus.position -= (ReactionTime + delay)
 		return PlayerStatus
 	}
 }

@@ -27,7 +27,7 @@ if (PLAYER_TYPE = "VLC")
 else if (PLAYER_TYPE = "MPC") 
 	PlayerHandler := new MPCInterface()
 
-currentClip := new Clip()
+currentClip := new ClipHandler()
 
 ; FUNCTIONS -----------------------------------------------------
 

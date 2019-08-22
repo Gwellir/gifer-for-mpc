@@ -9,7 +9,7 @@
 Menu, Tray, Icon, %A_WinDir%\system32\shell32.dll,224
 
 ; PLAYER PARAMETERS -----------------------------------------------------------
-global PLAYER_TYPE := "VLC" ; "MPC"|"VLC"
+global PLAYER_TYPE := "MPC" ; "MPC"|"VLC"
 
 ; this is ":12345" encoded with base64. Don't ask. Just don't.
 ; Do set your VLC web-interface password to "12345" though.
