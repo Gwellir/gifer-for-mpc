@@ -26,7 +26,6 @@ Class PlayerInterface {
 		}
 		; File operations delay (can reach ~1 sec on the first run)
 		delay := A_TickCount - keyPressTime
-		; personalized function for working with individual players
 		PlayerStatus := this.UnifyWebUIResponse(decodedStr)
 		; no corrections when video is paused for precise marking
 		If InStr(PlayerStatus.state, "playing")
@@ -53,8 +52,7 @@ class MPCInterface extends PlayerInterface {
 
 	; converts data relevant for the script into object
 	UnifyWebUIResponse(WebUIReply) {
-		; converting response syntax to MPC-BE format
-		WebUIReply := StrReplace(WebUIReply, """", "'")
+		WebUIReply := StrReplace(WebUIReply, """", "'")  ; converting response syntax to MPC-BE format
 		RegExMatch(WebUIReply, "OnStatus\('.*', '(.*)', (\d+), '.*', \d+, '.*', \d+, \d+, '(.*)'\)", MPCStatus)
 		AdaptedStatus := { position: MPCStatus2, state: MPCStatus1, fname: MPCStatus3 }
 		return AdaptedStatus
@@ -89,7 +87,7 @@ class VLCInterface extends PlayerInterface {
 		RegExMatch(WebUIReply, ".*""currentplid""\:(\d+).*""length""\:(\d+).*""state""\:""(\w+)"".*""position""\:([\.\d]+).*""filename""\:""(.*?)"".*", Stat)
 		
 		VLCPlaylist := this.RetrieveHTTP("http://localhost:8080/requests/playlist.json")
-		CapString := ".*""id""\:""\Q" Stat1 "\E"",.*?""uri""\:""file:\/\/\/(.*?)"".*}," ;.*?""current"".*"
+		CapString := ".*""id""\:""\Q" Stat1 "\E"",.*?""uri""\:""file:\/\/\/(.*?)"".*},"
 		RegExMatch(VLCPlaylist, CapString, PL)
 		; inverting slashes for path format compatibility
 		PL1 := StrReplace(this.DecodeURI(PL1), "/", "\")

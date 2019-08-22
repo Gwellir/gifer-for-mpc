@@ -9,7 +9,7 @@
 Menu, Tray, Icon, %A_WinDir%\system32\shell32.dll,224
 
 ; PLAYER PARAMETERS -----------------------------------------------------------
-global PLAYER_TYPE := "MPC" ; "MPC"|"VLC"
+global PLAYER_TYPE := "MPC" ; "MPC"|"VLC" - CHECK THE COMMENT FOR VLC_PW_IN_BASE64 IF USING VLC
 
 ; this is ":12345" encoded with base64. Don't ask. Just don't.
 ; Do set your VLC web-interface password to "12345" though.
@@ -26,7 +26,9 @@ global FINISH_OFFSET := 0
 
 ; ENCODER PARAMETERS ----------------------------------------------------------
 global CLIP_WIDTH := 800
-global CLIP_QUALITY := 28 ; 18 to 28 lower is better
+global CLIP_QUALITY := 28 ; 18 to 28, lower is better
+; CLI parameters and patterns which are more specific to the encoder
+; are stored in the Ffmpeg Class
 
 ; FILE PATH PARAMETERS --------------------------------------------------------
 ; set CLIPFOLDER to "" to put clips into the same folder as source video

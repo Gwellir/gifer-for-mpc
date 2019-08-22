@@ -40,7 +40,8 @@ Class Ffmpeg {
 			return " -c:a aac -b:a 128k -ac 2 "
 		} }
 
-; FFMPEG COMMANDS BUILDERS -----------------------------------------------------
+; FFMPEG COMMAND LINE BUILDERS -------------------------------------------------
+	; all full paths passed by variables must be enclosed with ""
 	fileSubExtractPattern {
 		get {
 			return """{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}"""
@@ -112,7 +113,6 @@ Class EncoderInterface {
 	}
 
 	getEncodingCommand(ffmpegParams, clip) {
-		; all full paths passed by variables must be enclosed with ""
 		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.sourceFile, Ffmpeg.ntscRate, ffmpegParams, clip.duration, clip.clipFile, Ffmpeg.logFile]
 		return format(Ffmpeg.finalEncodePattern, cmdParams*)
 	}
@@ -122,7 +122,6 @@ Class EncoderInterface {
 	getSubSource(clip) {
 		subFile := RegexReplace(clip.sourceFile, "\.[\w\d]+$", ".srt")
 		assFile := RegexReplace(clip.sourceFile, "\.[\w\d]+$", ".ass")
-		; checking whether .srt or .ass file with the same name as the video exists in the same directory
 		if FileExist(subFile) 
 			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, SubFile)
 		else if FileExist(assFile) 
