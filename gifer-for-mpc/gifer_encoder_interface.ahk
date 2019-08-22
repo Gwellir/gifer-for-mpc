@@ -9,57 +9,50 @@ Class Ffmpeg {
 	ntscRate {
 		get {
 			return " -r ntsc-film "
-		}
-	}
+		} }
 ; no subtitle tracks, 8-bit color, rescale to make pixels square, width 800px or native if it's lower, height dividable by 2,
 ; worst recommended h264 quality (28, lower is better, down to 18), encode with libx264
 	defaultParams {
 		get {
 			return " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min(800,iw)':-2"" -crf 28 -c:v libx264 "
-		}
-	}
+		} }
 ; everything else should be obvious, while PrimaryColour format is &H<2-symbol hexcode for transparency level><BBGGRR color hex code>
 ; any ASS style fields https://pastebin.com/80yDaaRF should be usable under 'force_style' parameter
 	withSubs {
 		get {
 			return " -sn -pix_fmt yuv420p -vf ""[in]scale=iw*sar:ih, scale='min(800,iw)':-2, subtitles=temp_subs.ass:force_style='FontName=Open Sans Semibold,FontSize=45,PrimaryColour=&H00FFFFFF,Bold=1'"" -crf 28 -c:v libx264 "
-		}
-	}
+		} }
 ; " -c:a copy " should be usable for 95% cases probably, like all HorribleSubs ongoing releases
 ; " -c:a aac -b:a 128k -ac 2 " will recode audio to AAC 128kbit/s stereo
 ; (in case of 5.1 stuff or awkward codecs)
 	withSound {
 		get {
 			return " -c:a aac -b:a 128k -ac 2 "
-		}
-	}
+		} }
 
 ; FILE LOCATIONS
 	exeFile {
 		get {
 			return WORK_FOLDER "\ffmpeg.exe"
-		}
-	}
+		} }
 	logFile {
 		get {
 			return WORK_FOLDER "\ffmpeg_gifer.log"
-		}
-	}
+		} }
 	tempSubFile {
 		get {
 			return WORK_FOLDER "\temp_subs.ass"
-		}
-	}
+		} }
 }
 
+; NO GLOBALS BELOW THIS LINE --------------------------------------------------
 ; EncoderInterface CLASS ----------------------------------------------------------
 
 Class EncoderInterface {
-	; NO GLOBALS BELOW THIS LINE ----------------------------------------------
 	
-	encode(mode, newVideoFullName, sourceVideoFile, markA, markB) {
-		ffmpegParams := this.prepareEncodingParameters(mode, sourceVideoFile, markA, markB)
-		encodeCMD := this.getEncodingCommand(ffmpegParams, newVideoFullName, sourceVideoFile, markA, markB)
+	encode(newVideoFullName, clip) {
+		ffmpegParams := this.prepareEncodingParameters(clip)
+		encodeCMD := this.getEncodingCommand(ffmpegParams, newVideoFullName, clip)
 		FileAppend, ==Encode start (debug)==`n %encodeCMD% `n, % Ffmpeg.logFile
 
 		; whole command string must be enclosed with double quotes as well
@@ -69,15 +62,15 @@ Class EncoderInterface {
 			throw ErrorLevel
 	}
 
-	prepareEncodingParameters(mode, sourceVideoFile, markA, markB) {
+	prepareEncodingParameters(clip) {
 		if (FileExist(Ffmpeg.logFile)) {
 			FileDelete, % Ffmpeg.logFile
 		}
 		; start forming FFMPEG parameters string according to requested mode
 		ffmpegParams := Ffmpeg.defaultParams
 		
-		if (mode >= 1) {
-			subExtractCMD := this.getSubSource(sourceVideoFile, markA, markB)
+		if (clip.mode >= 1) {
+			subExtractCMD := this.getSubSource(clip)
 			if (FileExist(Ffmpeg.tempSubFile))
 				FileDelete, % Ffmpeg.tempSubFile
 			FileAppend, ==Sub extraction start (debug)==`n %subExtractCMD% `n, % Ffmpeg.logFile
@@ -91,7 +84,7 @@ Class EncoderInterface {
 				ffmpegParams := Ffmpeg.withSubs
 			}
 		}
-		if (mode < 2)
+		if (clip.mode < 2)
 			; no audio stream option
 			ffmpegParams := " -an " ffmpegParams
 		Else
@@ -99,32 +92,35 @@ Class EncoderInterface {
 		return ffmpegParams
 	}
 
-	getEncodingCommand(ffmpegParams, newVideoFullName, sourceVideoFile, markA, markB) {
-		; all full paths passed by variables must be enclosed with "" 
-		return % """" Ffmpeg.exeFile """ -nostdin -ss " markA " -t " markB-markA " -i """ sourceVideoFile """ " Ffmpeg.ntscRate ffmpegParams " -t " markB-markA " """ newVideoFullName """ 2>> """ Ffmpeg.logFile """"
+	getEncodingCommand(ffmpegParams, newVideoFullName, clip) {
+		; all full paths passed by variables must be enclosed with ""
+		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.fName, Ffmpeg.ntscRate, ffmpegParams, clip.duration, newVideoFullName, Ffmpeg.logFile]
+		return format("""{1}"" -nostdin -ss {2} -t {3} -i ""{4}"" {5} {6} -t {7} ""{8}"" 2>> ""{9}""", cmdParams*)
 	}
 
 	; look for separate subtitle files within input video folder
 	; if none found, set the command to try extracting subtitles from the source video
-	getSubSource(sourceVideoFile, markA, markB) {
-		subFile := RegexReplace(sourceVideoFile, "\.[\w\d]+$", ".srt")
-		assFile := RegexReplace(sourceVideoFile, "\.[\w\d]+$", ".ass")
+	getSubSource(clip) {
+		subFile := RegexReplace(clip.fName, "\.[\w\d]+$", ".srt")
+		assFile := RegexReplace(clip.fName, "\.[\w\d]+$", ".ass")
 		; checking whether .srt or .ass file with the same name as the video exists in the same directory
 		if FileExist(subFile) 
-			subExtractCMD := this.getSubsFromSubFile(markA, markB, SubFile)
+			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, SubFile)
 		else if FileExist(assFile) 
-			subExtractCMD := this.getSubsFromSubFile(markA, markB, AssFile)
+			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, AssFile)
 		else 
-			subExtractCMD := this.getSubsFromVideoFile(markA, markB, sourceVideoFile)
+			subExtractCMD := this.getSubsFromVideoFile(clip.startPos, clip.duration, clip.fName)
 		return subExtractCMD
 	}
 
-	getSubsFromSubFile(markA, markB, subFile) {
-		return % """" Ffmpeg.exeFile """ -ss " markA " -t " markB-markA " -i """ subFile """ -t " markB-markA " """ Ffmpeg.tempSubFile """ 2>> """ Ffmpeg.logFile """"
+	getSubsFromSubFile(startPos, duration, subFile) {
+		cmdParams := [Ffmpeg.exeFile, startPos, duration, subFile, duration, Ffmpeg.tempSubFile, Ffmpeg.logFile]
+		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}""", cmdParams*)
 	}
 
-	getSubsFromVideoFile(markA, markB, videoFile) {
-		return % """" Ffmpeg.exeFile """ -ss " markA " -t " markB-markA Ffmpeg.ntscRate " -i """ videoFile """ -map 0:s:0 -t " markB-markA " """ Ffmpeg.tempSubFile """ 2>> """ Ffmpeg.logFile """"
+	getSubsFromVideoFile(startPos, duration, videoFile) {
+		cmdParams := [Ffmpeg.exeFile, startPos, duration, videoFile, duration,Ffmpeg.ntscRate, Ffmpeg.tempSubFile, Ffmpeg.logFile]
+		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -map 0:s:0 -t {5} {6} ""{7}"" 2>> ""{8}""", cmdParams*)
 	}
 
 	prepareSubtitles() {

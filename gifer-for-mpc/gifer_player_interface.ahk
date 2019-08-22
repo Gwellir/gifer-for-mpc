@@ -57,7 +57,6 @@ class MPCInterface extends PlayerInterface {
 		WebUIReply := StrReplace(WebUIReply, """", "'")
 		RegExMatch(WebUIReply, "OnStatus\('.*', '(.*)', (\d+), '.*', \d+, '.*', \d+, \d+, '(.*)'\)", MPCStatus)
 		AdaptedStatus := { position: MPCStatus2, state: MPCStatus1, fname: MPCStatus3 }
-		; msgbox % AdaptedStatus["position"] "`n" AdaptedStatus["state"] "`n" AdaptedStatus["fname"]
 		return AdaptedStatus
 	}
 }
@@ -69,8 +68,6 @@ class VLCInterface extends PlayerInterface {
 	RetrieveHTTP(URLToGet) {
 		oHTTP := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 		oHTTP.Open("GET", URLToGet, False)
-		; WHR SetCredentials cannot work with empty username (VLC only,
-		; MPC WebUI ignores this)
 		oHTTP.SetRequestHeader("Authorization", "Basic " this.VLCPasswordInBase64)
 		oHTTP.Send()
 		return oHTTP.ResponseText
@@ -92,7 +89,7 @@ class VLCInterface extends PlayerInterface {
 		RegExMatch(WebUIReply, ".*""currentplid""\:(\d+).*""length""\:(\d+).*""state""\:""(\w+)"".*""position""\:([\.\d]+).*""filename""\:""(.*?)"".*", Stat)
 		
 		VLCPlaylist := this.RetrieveHTTP("http://localhost:8080/requests/playlist.json")
-		CapString := ".*""name""\:""\Q" Stat5 "\E"",.*?""uri""\:""file:\/\/\/(.*?)"".*}," ;.*?""current"".*"
+		CapString := ".*""id""\:""\Q" Stat1 "\E"",.*?""uri""\:""file:\/\/\/(.*?)"".*}," ;.*?""current"".*"
 		RegExMatch(VLCPlaylist, CapString, PL)
 		; inverting slashes for path format compatibility
 		PL1 := StrReplace(this.DecodeURI(PL1), "/", "\")

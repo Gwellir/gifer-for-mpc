@@ -9,7 +9,7 @@
 Menu, Tray, Icon, %A_WinDir%\system32\shell32.dll,224
 
 ; PLAYER PARAMETERS -----------------------------------------------------------
-global PLAYER_TYPE := "MPC" ; "MPC"|"VLC"
+global PLAYER_TYPE := "VLC" ; "MPC"|"VLC"
 
 ; this is ":12345" encoded with base64. Don't ask. Just don't.
 ; Do set your VLC web-interface password to "12345" though.
@@ -34,10 +34,9 @@ global FORCE_FRATE := " -r ntsc-film " ; for compatibility use
 ; worst recommended h264 quality (28, lower is better, down to 18), encode with libx264
 global FFMPEG_DEFAULT := " -sn -pix_fmt yuv420p -vf ""scale=iw*sar:ih, scale='min(800,iw)':-2"" -crf 28 -c:v libx264 "
 
+;global SUB_FORMAT := ".ass" ; .ass|.srt, srt sometimes has troubles with timing
 ; everything else should be obvious, while PrimaryColour format is &H<2-symbol hexcode for transparency level><BBGGRR color hex code>
 ; any ASS style fields https://pastebin.com/80yDaaRF should be usable under 'force_style' parameter
-global SUB_FORMAT := ".ass" ; .ass|.srt, srt sometimes has troubles with timing
-
 global FFMPEG_WSUBS := " -sn -pix_fmt yuv420p -vf ""[in]scale=iw*sar:ih, scale='min(800,iw)':-2, subtitles=temp_subs" SUB_FORMAT ":force_style='FontName=Open Sans Semibold,FontSize=45,PrimaryColour=&H00FFFFFF,Bold=1'"" -crf 28 -c:v libx264 " 
 
 ; " -c:a copy " should be usable for 95% cases probably, like all HS ongoing releases
@@ -62,8 +61,8 @@ Hotkey % "^!+a", MarkStart ; CTRL(^) ALT(!) SHIFT(+) a
 Hotkey % "^#LButton", MarkStart ; CTRL WIN(#) LMB Press
 
 ; end marker
-Hotkey % "^!+s", MarkFinish ; CTRL ALT SHIFT s
-Hotkey % "^#LButton UP", MarkFinish ; CTRL WIN LMB Release
+Hotkey % "^!+s", MarkEnd ; CTRL ALT SHIFT s
+Hotkey % "^#LButton UP", MarkEnd ; CTRL WIN LMB Release
 
 ; check and encode
 Hotkey % "^!+z", EncodeClean ; CTRL ALT SHIFT z
@@ -79,13 +78,12 @@ Hotkey % "^#!Space", EncodeSound ; CTRL WIN ALT Space
 
 ; GENERATORS ------------------------------------------------------------------
 
-PrepareClipName(InputFileName) { 
+PrepareClipName(InputFileName, startPos, endPos, mode) { 
 	; removing all symbols which are not rus/eng alphabetic, numeric or these: "._[]- " from the clip name
 	ClipBaseName := RegexReplace(RegexReplace(InputFileName, "\.[\d\w]+?$", ""), "[^a-zA-Zа-яА-Я0-9_\.\[\] -]", "")
 	; adding prefix and suffix before returning, no extension required
 	; https://autohotkey.com/docs/Variables.htm#date A_* vars reference
-	;return ClipBaseName "_[" A_YYYY A_MM A_DD "]_" SubStr(A_TickCount, -2)
-	return ClipBaseName "_[" TimeA_ms "_" TimeB_ms "]_" 
+	return format("{1}_[{2}_{3}]_{4}", ClipBaseName, startPos, endPos, mode)
 }
 
 ;#include *i gifer_experimental.ahk
