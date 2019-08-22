@@ -70,6 +70,10 @@ Class ClipHandler {
 			this.clipFile := FNameDir "\" newClipName
 		else
 			this.clipFile := ClipHandler.clipFolder newClipName
+		; support for using multiple folders in PrepareClipName
+		SplitPath, % this.clipFile , , OutDir
+		if (!FileExist(OutDir))
+			RunWait, % Comspec " /c ""mkdir " OutDir """", , Hide
 	}
 
 	storeInClipboard() {

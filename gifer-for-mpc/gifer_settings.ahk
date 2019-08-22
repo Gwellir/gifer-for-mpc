@@ -28,7 +28,7 @@ global FINISH_OFFSET := 0
 global CLIP_WIDTH := 800
 global CLIP_QUALITY := 28 ; 18 to 28, lower is better
 ; CLI parameters and patterns which are more specific to the encoder
-; are stored in the Ffmpeg Class
+; are stored in the Ffmpeg Class (gifer_encoder_interface.ahk)
 
 ; FILE PATH PARAMETERS --------------------------------------------------------
 ; set CLIPFOLDER to "" to put clips into the same folder as source video
@@ -67,7 +67,12 @@ PrepareClipName(InputFileName, startPos, endPos, mode) {
 	ClipBaseName := RegexReplace(RegexReplace(InputFileName, "\.[\d\w]+?$", ""), "[^a-zA-Zа-яА-Я0-9_\.\[\] -]", "")
 	; adding prefix and suffix before returning, no extension required
 	; https://autohotkey.com/docs/Variables.htm#date A_* vars reference
-	return format("{1}_[{2}_{3}]_{4}", ClipBaseName, startPos, endPos, mode)
+	nameParams := [ClipBaseName, startPos, endPos, mode]
+	return format("{1}_[{2}_{3}]_{4}", nameParams*)
+	
+	; EXAMPLE (monthly folders) will save videos in different subfolders, i.e. \2019-08\ each month 
+	; nameParams := [A_YYYY, A_MM, CLipBaseName, startPos//1000, endPos//1000, mode]
+	; return format("{1}-{2}\{3}_[{4}_{5}]_{6}", nameParams*)
 }
 
 ;#include *i gifer_experimental.ahk
