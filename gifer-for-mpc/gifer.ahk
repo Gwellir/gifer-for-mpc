@@ -1,3 +1,4 @@
+; https://github.com/Gwellir/gifer-for-mpc
 ; Only works with Media Player Classic and VideoLAN Client (for now).
 ; Requires ffmpeg.exe from https://ffmpeg.zeranoe.com/builds/ at the 
 ; %APPDATA%/gifer-for-mpc folder.
