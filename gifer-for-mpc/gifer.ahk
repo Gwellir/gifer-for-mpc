@@ -1,17 +1,17 @@
 ; Only works with Media Player Classic and VideoLAN Client (for now).
-; Requires ffmpeg.exe from https://ffmpeg.zeranoe.com/builds/ at the %APPDATA% folder.
+; Requires ffmpeg.exe from https://ffmpeg.zeranoe.com/builds/ at the 
+; %APPDATA%/gifer-for-mpc folder.
 ; Turn on MPC's Web-interface in Options-Player-Web Interface-Listen on port: 13579.
 ; Obviously, get AutoHotKey @ https://autohotkey.com/download/ and install.
-; Put this file anywhere and run it.
-; Uses https://github.com/rostok/file2clip for putting clips into windows clipboard
+
+; Uses https://github.com/rostok/file2clip for placing clips into windows clipboard
 ; put file2clip.exe into %APPDATA% if you want this functionality
 ; Set PLAYER_TYPE to match your preferred player (MPC and VLC supported)
 
-; To minimize edits in TRIGGERS section when changes are made
 ; GLOBAL VARIABLES
 global START_OFFSET := 0
 global FINISH_OFFSET := 0
-global GIFER_VERSION := "9.1 testing"
+global GIFER_VERSION := "9.0 testing"
 
 ; Has a separate file for storing user settings and hotkeys.
 ; It must be placed at the same directory with this one.
@@ -20,7 +20,15 @@ global GIFER_VERSION := "9.1 testing"
 #include gifer_encoder_interface.ahk
 #include gifer_clip.ahk
 
+; INIT -------------------------------------------------------------------------
 SetWorkingDir, %WORK_FOLDER%
+
+if (!FileExist(Ffmpeg.exeFile)) {
+	ShowGUIMessage(format("Get the latest ffmpeg static build and put ffmpeg.exe into {1} folder please!", WORK_FOLDER), 1, 7000)
+	Run % "https://ffmpeg.zeranoe.com/builds/"
+	Sleep, 7000
+	ExitApp
+}
 
 if (PLAYER_TYPE = "VLC") 
 	PlayerHandler := new VLCInterface()
@@ -29,7 +37,7 @@ else if (PLAYER_TYPE = "MPC")
 
 currentClip := new ClipHandler()
 
-; FUNCTIONS -----------------------------------------------------
+; GENERIC FUNCTIONS ------------------------------------------------------------
 
 ShowGUIMessage(Message, isWarning:=0, Duration:=2000) {
 	Gui, Destroy
@@ -51,7 +59,7 @@ ShowGUIMessage(Message, isWarning:=0, Duration:=2000) {
 	Return
 }
 
-; TRIGGERED -----------------------------------------------------
+; TRIGGERS ---------------------------------------------------------------------
 
 ^!q::
 Debug:

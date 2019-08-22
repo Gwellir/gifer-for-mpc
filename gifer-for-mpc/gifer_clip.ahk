@@ -53,7 +53,7 @@ Class ClipHandler {
 			ShowGUIMessage("Encoding started...")
 			try {
 				EncoderInterface.encode(newVideoFullName, this.clipParams)
-				this.storeInClipBoard(newVideoFullName)
+				this.storeInClipboard(newVideoFullName)
 			} catch e { 
 				ShowGUIMessage("Could not encode the video!",1)
 			}
@@ -73,7 +73,7 @@ Class ClipHandler {
 		return newVideoFullName
 	}
 
-	storeInClipBoard(newVideoFullName) {
+	storeInClipboard(newVideoFullName) {
 		if (FileExist(ClipHandler.clipboardUtil)) {
 			; copying clip into clipboard via file2clip
 			ClipCmd := ClipHandler.clipboardUtil " """ newVideoFullName """"
