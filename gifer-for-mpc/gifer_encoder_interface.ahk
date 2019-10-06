@@ -53,6 +53,21 @@ Class Ffmpeg {
 		get {
 			return WORK_FOLDER "\" TEMP_SUB_FILE
 		} }
+
+	getEncodingCommand(ffmpegParams, clip) {
+		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.sourceFile, Ffmpeg.ntscRate, ffmpegParams, clip.duration, clip.clipFile, Ffmpeg.logFile]
+		return format("""{1}"" -nostdin -ss {2} -t {3} -i ""{4}"" {5} {6} -t {7} ""{8}"" 2>> ""{9}""", cmdParams*)
+	}
+
+	getSubsFromSubFile(startPos, duration, subFile) {
+		cmdParams := [Ffmpeg.exeFile, startPos, duration, subFile, duration, Ffmpeg.tempSubFile, Ffmpeg.logFile]
+		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}""", cmdParams*)
+	}
+
+	getSubsFromVideoFile(startPos, duration, videoFile) {
+		cmdParams := [Ffmpeg.exeFile, startPos, duration, videoFile, duration, Ffmpeg.ntscRate, Ffmpeg.tempSubFile, Ffmpeg.logFile]
+		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -map 0:s:0 -t {5} {6} ""{7}"" 2>> ""{8}""", cmdParams*)
+	}
 }
 
 ; NO GLOBALS BELOW THIS LINE --------------------------------------------------
@@ -61,7 +76,7 @@ Class Ffmpeg {
 Class EncoderInterface {
 	encode(clip) {
 		ffmpegParams := this.prepareEncodingParameters(clip)
-		encodeCMD := this.getEncodingCommand(ffmpegParams, clip)
+		encodeCMD := Ffmpeg.getEncodingCommand(ffmpegParams, clip)
 		
 		FileAppend, ==Encode start (debug)==`n %encodeCMD% `n, % Ffmpeg.logFile
 		; whole command string must be enclosed with double quotes as well
@@ -96,22 +111,17 @@ Class EncoderInterface {
 		return ffmpegParams
 	}
 
-	getEncodingCommand(ffmpegParams, clip) {
-		cmdParams := [Ffmpeg.exeFile, clip.startPos, clip.duration, clip.sourceFile, Ffmpeg.ntscRate, ffmpegParams, clip.duration, clip.clipFile, Ffmpeg.logFile]
-		return format("""{1}"" -nostdin -ss {2} -t {3} -i ""{4}"" {5} {6} -t {7} ""{8}"" 2>> ""{9}""", cmdParams*)
-	}
-
 	; look for separate subtitle files within input video folder
 	; if none found, set the command to try extracting subtitles from the source video
 	getSubSource(clip) {
 		subFile := RegexReplace(clip.sourceFile, "\.[\w\d]+$", ".srt")
 		assFile := RegexReplace(clip.sourceFile, "\.[\w\d]+$", ".ass")
 		if FileExist(subFile) 
-			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, SubFile)
+			subExtractCMD := Ffmpeg.getSubsFromSubFile(clip.startPos, clip.duration, SubFile)
 		else if FileExist(assFile) 
-			subExtractCMD := this.getSubsFromSubFile(clip.startPos, clip.duration, AssFile)
+			subExtractCMD := Ffmpeg.getSubsFromSubFile(clip.startPos, clip.duration, AssFile)
 		else 
-			subExtractCMD := this.getSubsFromVideoFile(clip.startPos, clip.duration, clip.sourceFile)
+			subExtractCMD := FFmpeg.getSubsFromVideoFile(clip.startPos, clip.duration, clip.sourceFile)
 		return subExtractCMD
 	}
 
@@ -129,16 +139,6 @@ Class EncoderInterface {
 			return True
 	}
 	
-	getSubsFromSubFile(startPos, duration, subFile) {
-		cmdParams := [Ffmpeg.exeFile, startPos, duration, subFile, duration, Ffmpeg.tempSubFile, Ffmpeg.logFile]
-		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -t {5} ""{6}"" 2>> ""{7}""", cmdParams*)
-	}
-
-	getSubsFromVideoFile(startPos, duration, videoFile) {
-		cmdParams := [Ffmpeg.exeFile, startPos, duration, videoFile, duration, Ffmpeg.ntscRate, Ffmpeg.tempSubFile, Ffmpeg.logFile]
-		return format("""{1}"" -ss {2} -t {3} -i ""{4}"" -map 0:s:0 -t {5} {6} ""{7}"" 2>> ""{8}""", cmdParams*)
-	}
-
 	prepareSubtitles() {
 		FileRead, subContents, % Ffmpeg.tempSubFile
 		; removing additional formatting tags from subs
@@ -146,8 +146,9 @@ Class EncoderInterface {
 		if (RegexMatch(subContents, "\Q[Script Info]\E")) {
 			; hack .ass render resolution so the font size of the subs fits better
 			subContents := RegexReplace(subContents, "PlayResX: \d+", "PlayResX: 800")
-			subContents := RegexReplace(subContents, "\nPlayResY\: \d+", "")
-			; TODO strip styles
+			subContents := RegexReplace(subContents, "PlayResY:.*?\r\n", "")
+			subContents := RegexReplace(subContents, ";.*?\r\n", "")
+			; TODO unify styles
 		}
 		subFile := FileOpen(Ffmpeg.tempSubFile, "w")
 		subFile.Write(subContents)

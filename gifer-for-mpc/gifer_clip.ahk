@@ -70,10 +70,16 @@ Class ClipHandler {
 			this.clipFile := FNameDir "\" newClipName
 		else
 			this.clipFile := ClipHandler.clipFolder newClipName
+		; autoerase empty clip files from failed encoding attempts
+		if (FileExist(this.clipFile)) {
+			FileGetSize, clipFileSize, % this.clipFile
+			if (clipFileSize = 0)
+				FileDelete, % this.clipFile
+		}
 		; support for using multiple folders in PrepareClipName
 		SplitPath, % this.clipFile , , OutDir
 		if (!FileExist(OutDir))
-			RunWait, % Comspec " /c ""mkdir " OutDir """", , Hide
+			FileCreateDir, % OutDir
 	}
 
 	storeInClipboard() {

@@ -31,8 +31,9 @@ global CLIP_QUALITY := 28 ; 18 to 28, lower is better
 ; are stored in the Ffmpeg Class (gifer_encoder_interface.ahk)
 
 ; FILE PATH PARAMETERS --------------------------------------------------------
-; set CLIPFOLDER to "" to put clips into the same folder as source video
-global CLIP_FOLDER := "%USERPROFILE%\Videos\"
+; set CLIP_FOLDER to "" to put clips into the same folder as source video
+EnvGet, USER_PROFILE, USERPROFILE
+global CLIP_FOLDER := USER_PROFILE "\Videos\"
 global WORK_FOLDER := A_AppData "\gifer-for-mpc"
 global TEMP_SUB_FILE := "temp_subs.ass"
 global CLIPBOARD_UTIL := WORK_FOLDER "\file2clip.exe"
