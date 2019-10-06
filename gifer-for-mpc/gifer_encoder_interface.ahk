@@ -146,8 +146,9 @@ Class EncoderInterface {
 		if (RegexMatch(subContents, "\Q[Script Info]\E")) {
 			; hack .ass render resolution so the font size of the subs fits better
 			subContents := RegexReplace(subContents, "PlayResX: \d+", "PlayResX: 800")
-			subContents := RegexReplace(subContents, "\nPlayResY\: \d+", "")
-			; TODO strip styles
+			subContents := RegexReplace(subContents, "PlayResY:.*?\r\n", "")
+			subContents := RegexReplace(subContents, ";.*?\r\n", "")
+			; TODO unify styles
 		}
 		subFile := FileOpen(Ffmpeg.tempSubFile, "w")
 		subFile.Write(subContents)
